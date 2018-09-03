@@ -2,4 +2,5 @@
 <resources>
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="BigMargin">50dp</dimen>
+    <dimen name="title_bottom_margin">10</dimen>
 </resources>

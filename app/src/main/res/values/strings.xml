@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">DiplomskiRad</string>
     <string name="sign_in_text">Sign In</string>
+    <string name="desc_firebase_lockup">Description</string>
+    <string name="emailpassword_title_text">emailpassword</string>
+    <string name="signed_out">Signed out</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="sign_in">SignIn</string>
+    <string name="sign_out">SignOut</string>
 </resources>
