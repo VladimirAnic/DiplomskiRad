@@ -85,18 +85,24 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
                             FirebaseUser user = mAuth.getCurrentUser();
 
                             updateUI(user);
-                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                            IntentIntegrator integrator = new IntentIntegrator(activity);
+                            integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+                            integrator.setPrompt("Skeniraj");
+                            integrator.setCameraId(0);
+                            integrator.setBeepEnabled(false);
+                            integrator.setBarcodeImageEnabled(false);
+                            integrator.initiateScan();
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
-                            Toast.makeText(SignInActivity.this, "Authentication failed.",
+                            Toast.makeText(SignInActivity.this, "Autentifikacija neuspješna.",
                                     Toast.LENGTH_SHORT).show();
                             updateUI(null);
                         }
 
                         // [START_EXCLUDE]
                         if (!task.isSuccessful()) {
-                            Toast.makeText(SignInActivity.this, "Authentication failed.",
+                            Toast.makeText(SignInActivity.this, "Autentifikacija neuspješna.",
                                     Toast.LENGTH_SHORT).show();
                         }
                         // [END_EXCLUDE]
@@ -116,7 +122,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
 
         String email = mEmailField.getText().toString();
         if (TextUtils.isEmpty(email)) {
-            mEmailField.setError("Required.");
+            mEmailField.setError("Obvezno.");
             valid = false;
         } else {
             mEmailField.setError(null);
@@ -124,7 +130,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
 
         String password = mPasswordField.getText().toString();
         if (TextUtils.isEmpty(password)) {
-            mPasswordField.setError("Required.");
+            mPasswordField.setError("Obvezno.");
             valid = false;
         } else {
             mPasswordField.setError(null);
@@ -137,7 +143,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         if (user != null) {
             IntentIntegrator integrator = new IntentIntegrator(activity);
             integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
-            integrator.setPrompt("Scan");
+            integrator.setPrompt("Skeniraj");
             integrator.setCameraId(0);
             integrator.setBeepEnabled(false);
             integrator.setBarcodeImageEnabled(false);
@@ -158,13 +164,6 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
 
         if (i == R.id.email_sign_in_button) {
             signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
-        IntentIntegrator integrator = new IntentIntegrator(activity);
-        integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
-        integrator.setPrompt("Scan");
-        integrator.setCameraId(0);
-        integrator.setBeepEnabled(false);
-        integrator.setBarcodeImageEnabled(false);
-        integrator.initiateScan();
         } else if (i == R.id.sign_out_button) {
             signOut();
         }
@@ -175,12 +174,13 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if(result != null){
             if(result.getContents()==null){
-                Toast.makeText(this, "You cancelled the scanning", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Skeniranje prekinuto", Toast.LENGTH_LONG).show();
                 signOut();
             }
             else {
-                CallAPI();
-                Toast.makeText(this, "Attendance noted down successfully!", Toast.LENGTH_LONG).show();
+                String contents = data.getStringExtra("SCAN_RESULT");
+                CallAPI(contents);
+               // Toast.makeText(this, "Attendance noted down successfully!", Toast.LENGTH_LONG).show();
                 signOut();
             }
         }
@@ -188,12 +188,12 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
-   public void CallAPI()
+   public void CallAPI(final String contents)
    {
        final FirebaseUser user = mAuth.getCurrentUser();
        // Instantiate the RequestQueue.
        RequestQueue queue = Volley.newRequestQueue(this);
-       String url ="http://attendence.azurewebsites.net/test/postTestJSON";
+       String url ="http://attendence.azurewebsites.net/test/AddStudentToLecture";
        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                new com.android.volley.Response.Listener<String>()
                {
@@ -201,6 +201,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
                    public void onResponse(String response) {
                        // response
                        Log.d("Response", response);
+                       Toast.makeText(getApplicationContext(), "Uspješno upisani na predavanje!", Toast.LENGTH_LONG).show();
                    }
                },
                new com.android.volley.Response.ErrorListener()
@@ -209,6 +210,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
                    public void onErrorResponse(VolleyError error) {
                        // error
                        Log.d("Error.Response", error.toString());
+                       Toast.makeText(getApplicationContext(), "Ups, nešto je pošlo po krivu!", Toast.LENGTH_LONG).show();
                    }
                }
        ) {
@@ -222,10 +224,8 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
 
 
                    Map<String, String> params = new HashMap<String, String>();
-               params.put("firstName", "Test");
-               params.put("lastName", "postic");
-               params.put("role","student");
-               params.put("userName",user.getEmail().toString());
+               params.put("UserName",user.getEmail().toString());
+               params.put("LectureID",contents);
 
                return params;
            }
